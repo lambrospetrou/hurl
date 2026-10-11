@@ -1,0 +1,85 @@
+# Rebases the Workers patches (see contrib/workers/README.md) on upstream Hurl and runs their
+# checks. On success, the rebased branch is pushed to `upstream-sync/<branch>`; on a conflict or
+# a failed check, the job fails.
+#
+# The weekly schedule is disabled: uncomment `schedule` to enable it.
+name: upstream-sync
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch with the patches to rebase'
+        required: false
+        type: string
+  # schedule:
+  #   - cron: '0 6 * * 1'
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  UPSTREAM_URL: https://github.com/Orange-OpenSource/hurl.git
+  UPSTREAM_BRANCH: master
+  PATCH_BRANCH: ${{ inputs.branch || github.ref_name }}
+
+jobs:
+
+  sync:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+      with:
+        ref: ${{ env.PATCH_BRANCH }}
+        fetch-depth: 0
+        persist-credentials: true
+
+    - name: Rebase on upstream
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git remote add upstream "${UPSTREAM_URL}"
+        git fetch --no-tags upstream "${UPSTREAM_BRANCH}"
+        base="$(git merge-base HEAD "upstream/${UPSTREAM_BRANCH}")"
+        echo "Patches:"
+        git log --oneline "${base}..HEAD"
+        if ! git rebase "upstream/${UPSTREAM_BRANCH}"; then
+          echo "::error::Conflict when rebasing ${PATCH_BRANCH} on upstream/${UPSTREAM_BRANCH}"
+          git status --short
+          git diff --name-only --diff-filter=U
+          git rebase --abort
+          exit 1
+        fi
+        git range-diff "${base}..ORIG_HEAD" "upstream/${UPSTREAM_BRANCH}..HEAD"
+
+    - name: Install prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config libclang-dev
+        bin/install_rust.sh
+        cargo install --locked bindgen-cli@0.72.1
+
+    - name: Check default features
+      run: |
+        cargo clippy --all-targets -- -D warnings
+        cargo test --package hurl --package hurl_core --package hurlfmt --lib
+
+    - name: Check no default features
+      run: bin/check/no_default_features.sh
+
+    - name: Test the Worker in local workerd
+      working-directory: contrib/workers/worker
+      run: |
+        npm ci
+        npm run typecheck
+        npm test
+
+    - name: Push the rebased branch
+      run: git push --force "origin" "HEAD:refs/heads/upstream-sync/${PATCH_BRANCH}"
