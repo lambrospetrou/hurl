@@ -565,6 +565,7 @@ pub mod tests {
         }
     }
 
+    #[cfg(feature = "libxml")]
     pub fn xpath_invalid_query() -> Query {
         // xpath ???
         let whitespace = Whitespace {
@@ -671,6 +672,7 @@ pub mod tests {
         }
     }
 
+    #[cfg(feature = "libxml")]
     pub fn jsonpath_duration() -> Query {
         // jsonpath $.errors
         Query {
@@ -1223,6 +1225,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_query_xpath_error_eval() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();
@@ -1258,6 +1261,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_query_xpath() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();
@@ -1289,6 +1293,7 @@ pub mod tests {
     }
 
     #[cfg(test)]
+    #[cfg(feature = "libxml")]
     pub fn xpath_html_charset() -> Query {
         // $x("normalize-space(/html/head/meta/@charset)")
         let whitespace = Whitespace {
@@ -1312,6 +1317,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_query_xpath_with_html() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();

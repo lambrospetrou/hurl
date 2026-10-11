@@ -15,9 +15,7 @@
  * limitations under the License.
  *
  */
-use std::fs::File;
 use std::io;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::SecondsFormat;
@@ -516,7 +514,6 @@ fn write_response(response: &Response, dir: &Path) -> Result<PathBuf, io::Error>
         None => relative_path.to_path_buf(),
     };
     let path = dir.join(relative_path.clone());
-    let mut file = File::create(path)?;
-    file.write_all(&response.body)?;
+    crate::util::fs::write(&path, &response.body, false)?;
     Ok(relative_path)
 }

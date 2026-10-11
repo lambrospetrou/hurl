@@ -15,7 +15,6 @@
  * limitations under the License.
  *
  */
-use chrono::Utc;
 use hurl_core::ast::SourceInfo;
 
 use crate::runner::{Number, RunnerError, RunnerErrorKind, Value};
@@ -28,7 +27,7 @@ pub fn eval_days_before_now(
 ) -> Result<Option<Value>, RunnerError> {
     match value {
         Value::Date(value) => {
-            let diff = Utc::now().signed_duration_since(*value);
+            let diff = crate::util::clock::now().signed_duration_since(*value);
             Ok(Some(Value::Number(Number::Integer(diff.num_days()))))
         }
         v => {

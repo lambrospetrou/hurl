@@ -13,23 +13,35 @@ rust-version = "1.99.0"
 [lib]
 name = "hurl"
 
+[[bin]]
+name = "hurl"
+path = "src/main.rs"
+required-features = ["curl", "libxml"]
+
 [features]
+default = ["curl", "libxml"]
+# Send HTTP requests with libcurl. Without this feature, HTTP requests, clock and sleep go through
+# the host platform (see `hurl::host`), for targets like wasm32-unknown-unknown.
+curl = ["dep:curl", "dep:curl-sys"]
+# Use libxml2 for XML request bodies and XPath queries. Without this feature, XPath queries and
+# filters fail with an unsupported error.
+libxml = ["dep:libxml", "hurl_core/libxml"]
 # Re-export of curl/static-ssl: use a bundled OpenSSL version and statically link to it. Only applies on platforms that
 # use OpenSSL
-static-openssl = ["curl/static-ssl", "curl-sys/static-ssl"]
+static-openssl = ["curl", "curl/static-ssl", "curl-sys/static-ssl"]
 
 [dependencies]
 base64 = "0.23.1"
 brotli = "9.0.0"
 chrono = { version = "0.4.45", default-features = false, features = ["clock"] }
 clap = { version = "4.6.7", features = ["string", "wrap_help"] }
-curl = "0.4.51"
-curl-sys = "0.4.91"
+curl = { version = "0.4.51", optional = true }
+curl-sys = { version = "0.4.91", optional = true }
 encoding_rs = "0.8.42"
 glob = "0.3.4"
-hurl_core = { version = "8.1.0", path = "../hurl_core" }
+hurl_core = { version = "8.1.0", path = "../hurl_core", default-features = false }
 libflate = "2.3.2"
-libxml = "0.3.22"
+libxml = { version = "0.3.22", optional = true }
 md5 = "0.8.1"
 percent-encoding = "2.3.2"
 regex = "1.13.1"
@@ -41,6 +53,12 @@ xml = "1.4.0"
 # uuid features: lets you generate random UUIDs and use a faster (but still sufficiently random) RNG
 uuid = { version = "1.28.0", features = ["v4" , "fast-rng"] }
 similar = "3.2.0"
+
+# On wasm32-unknown-unknown, the embedder provides randomness with a getrandom custom backend.
+[target.'cfg(target_family = "wasm")'.dependencies]
+uuid = { version = "1.28.0", features = ["v4", "rng-getrandom"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 terminal_size = "0.4.4"
 
 [target.'cfg(windows)'.build-dependencies]

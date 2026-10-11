@@ -410,6 +410,7 @@ mod tests {
 
     use self::super::super::{assert, capture};
     use super::*;
+    #[cfg(feature = "libxml")]
     use crate::runner::Number;
 
     pub fn user_response() -> Response {
@@ -459,6 +460,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     pub fn test_eval_asserts() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();
@@ -509,6 +511,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     pub fn test_eval_captures() {
         let mut variables = VariableSet::new();
         let mut cache = BodyCache::new();

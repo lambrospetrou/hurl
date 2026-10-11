@@ -67,4 +67,8 @@ mod template;
 mod value;
 mod value_impl;
 mod variable;
+#[cfg(feature = "libxml")]
+mod xpath;
+#[cfg(not(feature = "libxml"))]
+#[path = "xpath_disabled.rs"]
 mod xpath;

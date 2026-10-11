@@ -15,7 +15,6 @@
  * limitations under the License.
  *
  */
-use chrono::Utc;
 use hurl_core::ast::Function;
 use uuid::Uuid;
 
@@ -26,7 +25,7 @@ use super::value::Value;
 pub fn eval(function: &Function) -> Result<Value, RunnerError> {
     match &function {
         Function::NewDate => {
-            let now = Utc::now();
+            let now = crate::util::clock::now();
             Ok(Value::Date(now))
         }
         Function::NewUuid => {

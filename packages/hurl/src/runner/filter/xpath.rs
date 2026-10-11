@@ -106,6 +106,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn eval_filter_xpath_doc_ok() {
         let variables = VariableSet::new();
 
@@ -123,6 +124,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn eval_filter_xpath_doc_ko_invalid_xpath() {
         let variables = VariableSet::new();
 
