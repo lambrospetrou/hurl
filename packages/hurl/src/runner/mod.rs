@@ -37,6 +37,7 @@ pub use hurl_core::input::{Input, InputKind};
 
 mod assert;
 mod body;
+mod body_retention;
 mod cache;
 mod capture;
 mod diff;

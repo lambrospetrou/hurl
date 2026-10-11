@@ -22,6 +22,7 @@ use hurl_core::parser;
 use hurl_core::types::{Count, Index};
 
 use crate::http::{Call, Client, CredentialForwarding, FollowLocation};
+use crate::runner::body_retention::retain_bodies;
 use crate::util::clock::{self, Stopwatch};
 use crate::util::logger::{ErrorFormat, Logger, LoggerOptions};
 use crate::util::term::{Stderr, Stdout, WriteMode};
@@ -168,6 +169,7 @@ pub fn run_entries(
     let mut variables = variables.clone();
     let mut current = Index::new(runner_options.from_entry.unwrap_or(1));
     let mut repeat_count = 0;
+    let mut retained_body_size = 0;
     let last = Index::new(runner_options.to_entry.unwrap_or(entries.len()));
     let default_verbosity = logger.verbosity;
     let start = Stopwatch::start();
@@ -271,7 +273,14 @@ pub fn run_entries(
 
         let has_error = results.last().is_some_and(|r| !r.errors.is_empty());
 
-        entries_result.extend(results);
+        for mut result in results {
+            retain_bodies(
+                &mut result,
+                runner_options.max_retained_body_size,
+                &mut retained_body_size,
+            );
+            entries_result.push(result);
+        }
 
         if !runner_options.continue_on_error && has_error {
             break;
