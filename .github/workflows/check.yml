@@ -92,6 +92,10 @@ jobs:
       if: success() || failure()
       run: bin/check/clippy.sh
 
+    - name: No default features (WebAssembly)
+      if: success() || failure()
+      run: bin/check/no_default_features.sh
+
     - name: Ruff
       if: success() || failure()
       run: bin/check/ruff.sh

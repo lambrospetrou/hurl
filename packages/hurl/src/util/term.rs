@@ -77,6 +77,11 @@ fn write_stdout(buf: &[u8]) -> Result<(), io::Error> {
     Ok(())
 }
 
+#[cfg(not(any(target_family = "unix", target_family = "windows")))]
+fn write_stdout(buf: &[u8]) -> Result<(), io::Error> {
+    io::stdout().write_all(buf)
+}
+
 #[cfg(target_family = "windows")]
 fn write_stdout(buf: &[u8]) -> Result<(), io::Error> {
     // From <https://doc.rust-lang.org/std/io/struct.Stdout.html>:

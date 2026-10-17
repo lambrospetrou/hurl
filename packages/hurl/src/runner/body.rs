@@ -79,7 +79,7 @@ pub fn eval_file(
         return Err(RunnerError::new(filename.source_info, kind, false));
     }
     let resolved_file = context_dir.resolved_path(&path);
-    match std::fs::read(resolved_file) {
+    match crate::util::fs::read(&resolved_file) {
         Ok(value) => Ok(value),
         Err(_) => {
             let kind = RunnerErrorKind::FileReadAccess { path };

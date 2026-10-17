@@ -94,6 +94,7 @@ pub mod tests {
 
     use self::super::super::query;
     use super::*;
+    #[cfg(feature = "libxml")]
     use crate::runner::{Number, Value};
 
     pub fn user_count_capture() -> Capture {
@@ -129,6 +130,7 @@ pub mod tests {
         }
     }
 
+    #[cfg(feature = "libxml")]
     pub fn duration_capture() -> Capture {
         // non scalar value
         let whitespace = Whitespace {
@@ -163,6 +165,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_invalid_xpath() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();
@@ -256,6 +259,7 @@ pub mod tests {
     }
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_capture() {
         let variables = VariableSet::new();
         let mut cache = BodyCache::new();

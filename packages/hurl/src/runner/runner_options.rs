@@ -49,6 +49,7 @@ pub struct RunnerOptionsBuilder {
     insecure: bool,
     ip_resolve: IpResolve,
     max_filesize: Option<u64>,
+    max_retained_body_size: Option<u64>,
     max_recv_speed: Option<BytesPerSec>,
     max_redirect: Count,
     max_send_speed: Option<BytesPerSec>,
@@ -106,6 +107,7 @@ impl Default for RunnerOptionsBuilder {
             insecure: false,
             ip_resolve: IpResolve::default(),
             max_filesize: None,
+            max_retained_body_size: None,
             max_recv_speed: None,
             max_redirect: Count::Finite(50),
             max_send_speed: None,
@@ -308,6 +310,17 @@ impl RunnerOptionsBuilder {
     /// Set the file size limit
     pub fn max_filesize(&mut self, max_filesize: Option<u64>) -> &mut Self {
         self.max_filesize = max_filesize;
+        self
+    }
+
+    /// Set the maximum size in bytes of the request and response bodies kept in the run result.
+    ///
+    /// The bodies of an entry are used by its captures, asserts and output, then kept in the
+    /// [`super::HurlResult`] (for reports) only if they fit in the remaining size. Otherwise, they
+    /// are dropped, and [`super::EntryResult::bodies_dropped`] is set. By default (`None`), all the
+    /// bodies are kept.
+    pub fn max_retained_body_size(&mut self, max_retained_body_size: Option<u64>) -> &mut Self {
+        self.max_retained_body_size = max_retained_body_size;
         self
     }
 
@@ -524,6 +537,7 @@ impl RunnerOptionsBuilder {
             insecure: self.insecure,
             ip_resolve: self.ip_resolve,
             max_filesize: self.max_filesize,
+            max_retained_body_size: self.max_retained_body_size,
             max_recv_speed: self.max_recv_speed,
             max_redirect: self.max_redirect,
             max_send_speed: self.max_send_speed,
@@ -609,6 +623,8 @@ pub struct RunnerOptions {
     pub(crate) insecure: bool,
     /// Set the file size limit.
     pub(crate) max_filesize: Option<u64>,
+    /// Set the maximum size of the request and response bodies kept in the run result.
+    pub(crate) max_retained_body_size: Option<u64>,
     /// Set the maximum download speed.
     pub(crate) max_recv_speed: Option<BytesPerSec>,
     /// Set maximum number of redirection-followings allowed.

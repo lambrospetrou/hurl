@@ -160,6 +160,7 @@ pub fn run(
         if !errors.is_empty() {
             logger.debug("");
             return EntryResult {
+                bodies_dropped: false,
                 entry_index,
                 source_info,
                 calls,
@@ -186,6 +187,7 @@ pub fn run(
                 Ok(captures) => captures,
                 Err(e) => {
                     return EntryResult {
+                        bodies_dropped: false,
                         entry_index,
                         source_info,
                         calls,
@@ -227,6 +229,7 @@ pub fn run(
     let errors = asserts_to_errors(&asserts);
 
     EntryResult {
+        bodies_dropped: false,
         entry_index,
         source_info,
         calls,

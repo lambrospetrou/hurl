@@ -56,7 +56,7 @@ impl BodyCache {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "libxml"))]
 mod tests {
     use crate::runner::Value;
     use crate::runner::cache::BodyCache;

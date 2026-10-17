@@ -15,9 +15,7 @@
  * limitations under the License.
  *
  */
-use std::fs::File;
 use std::io;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::SecondsFormat;
@@ -241,6 +239,8 @@ impl EntryResultJson {
         response_dir: Option<&Path>,
         secrets: &[&str],
     ) -> Result<Self, io::Error> {
+        // Dropped bodies are not saved: the report has no `body` for these responses.
+        let response_dir = response_dir.filter(|_| !entry.bodies_dropped);
         let calls = entry
             .calls
             .iter()
@@ -516,7 +516,6 @@ fn write_response(response: &Response, dir: &Path) -> Result<PathBuf, io::Error>
         None => relative_path.to_path_buf(),
     };
     let path = dir.join(relative_path.clone());
-    let mut file = File::create(path)?;
-    file.write_all(&response.body)?;
+    crate::util::fs::write(&path, &response.body, false)?;
     Ok(relative_path)
 }

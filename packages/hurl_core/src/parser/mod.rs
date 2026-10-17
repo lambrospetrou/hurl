@@ -55,4 +55,8 @@ mod query;
 mod sections;
 mod string;
 mod template;
+#[cfg(feature = "libxml")]
+mod xml;
+#[cfg(not(feature = "libxml"))]
+#[path = "xml_scanner.rs"]
 mod xml;

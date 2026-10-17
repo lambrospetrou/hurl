@@ -104,6 +104,9 @@ pub struct EntryResult {
     pub compressed: bool,
     /// The debug curl command line from this entry result.
     pub curl_cmd: CurlCmd,
+    /// The request and response bodies of `calls` have been dropped after the run of the entry
+    /// (see [`super::RunnerOptionsBuilder::max_retained_body_size`]).
+    pub bodies_dropped: bool,
 }
 
 impl Default for EntryResult {
@@ -118,6 +121,7 @@ impl Default for EntryResult {
             transfer_duration: Duration::from_millis(0),
             compressed: false,
             curl_cmd: CurlCmd::default(),
+            bodies_dropped: false,
         }
     }
 }

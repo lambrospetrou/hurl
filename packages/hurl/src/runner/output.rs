@@ -15,8 +15,6 @@
  * limitations under the License.
  *
  */
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::PathBuf;
 use std::{fmt, io};
 
@@ -93,13 +91,7 @@ impl Output {
                 io::Error::other(message)
             }),
             Output::File(filename) => {
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(append)
-                    .truncate(!append)
-                    .open(filename)?;
-                file.write_all(bytes).map_err(|e| {
+                crate::util::fs::write(filename, bytes, append).map_err(|e| {
                     let filename = filename.display().to_string();
                     let message = format!("{filename} can not be written ({e})");
                     io::Error::other(message)

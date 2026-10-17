@@ -39,6 +39,8 @@
 //!
 //! This crate works on Windows, macOS and Linux.
 
+#[cfg(not(feature = "curl"))]
+pub mod host;
 mod html;
 pub mod http;
 mod json;
