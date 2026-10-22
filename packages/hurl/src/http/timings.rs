@@ -18,8 +18,10 @@
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
+#[cfg(feature = "curl")]
 use curl::easy::Easy;
 
+#[cfg(feature = "curl")]
 use super::easy_ext;
 
 /// Timing information for an HTTP transfer (see <https://hurl.dev/docs/response.html#timings>).
@@ -38,6 +40,7 @@ pub struct Timings {
     pub total: Duration,
 }
 
+#[cfg(feature = "curl")]
 impl Timings {
     pub fn new(easy: &mut Easy, begin_call: DateTime<Utc>, end_call: DateTime<Utc>) -> Self {
         // We try the *_t timing function of libcurl (available for libcurl >= 7.61.0)

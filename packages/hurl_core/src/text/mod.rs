@@ -27,6 +27,11 @@ pub fn init_crate_colored() {
     control::set_override(true);
 }
 
+#[cfg(not(any(target_family = "unix", target_family = "windows")))]
+pub fn init_crate_colored() {
+    control::set_override(true);
+}
+
 #[cfg(target_family = "windows")]
 pub fn init_crate_colored() {
     control::set_override(true);

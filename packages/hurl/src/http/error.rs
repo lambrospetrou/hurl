@@ -44,6 +44,8 @@ pub enum HttpError {
         description: String,
     },
     UnsupportedHttpVersion(RequestedHttpVersion),
+    /// The host platform could not send the request (see `crate::host`).
+    Host(String),
     /// Request URL is invalid (URL and reason)
     InvalidUrl(String, String),
     /// The maximum response size has been exceeded.
@@ -52,6 +54,7 @@ pub enum HttpError {
     AllowedResponseSizeExceeded(u64),
 }
 
+#[cfg(feature = "curl")]
 impl From<curl::Error> for HttpError {
     fn from(err: curl::Error) -> Self {
         let code = err.code() as i32;
@@ -60,6 +63,7 @@ impl From<curl::Error> for HttpError {
     }
 }
 
+#[cfg(feature = "curl")]
 impl From<curl::FormError> for HttpError {
     fn from(err: curl::FormError) -> Self {
         let code = err.code() as i32;
@@ -77,6 +81,7 @@ impl HttpError {
             HttpError::CouldNotUncompressResponse { .. } => "Decompression error".to_string(),
             HttpError::InvalidCharset { .. } => "Invalid charset".to_string(),
             HttpError::InvalidDecoding { .. } => "Invalid decoding".to_string(),
+            HttpError::Host(_) => "HTTP connection".to_string(),
             HttpError::InvalidUrl(..) => "Invalid URL".to_string(),
             HttpError::Libcurl { .. } => "HTTP connection".to_string(),
             HttpError::LibcurlUnknownOption { .. } => "HTTP connection".to_string(),
@@ -105,6 +110,7 @@ impl HttpError {
             HttpError::InvalidDecoding { charset } => {
                 format!("could not decode response body with charset '{charset}'")
             }
+            HttpError::Host(description) => description.clone(),
             HttpError::InvalidUrl(url, reason) => {
                 format!("invalid URL <{url}> ({reason})").to_string()
             }

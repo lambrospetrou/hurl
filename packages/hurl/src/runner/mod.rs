@@ -37,6 +37,7 @@ pub use hurl_core::input::{Input, InputKind};
 
 mod assert;
 mod body;
+mod body_retention;
 mod cache;
 mod capture;
 mod diff;
@@ -67,4 +68,8 @@ mod template;
 mod value;
 mod value_impl;
 mod variable;
+#[cfg(feature = "libxml")]
+mod xpath;
+#[cfg(not(feature = "libxml"))]
+#[path = "xpath_disabled.rs"]
 mod xpath;

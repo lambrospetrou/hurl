@@ -41,14 +41,23 @@ pub use self::response_cookie::{CookieAttribute, ResponseCookie};
 pub use self::tests::*;
 pub use self::timings::Timings;
 pub use self::url::{Url, UrlError};
+#[cfg(feature = "curl")]
 pub use self::version::libcurl_version_info;
 
 mod call;
 mod certificate;
+#[cfg(feature = "curl")]
+mod client;
+#[cfg(not(feature = "curl"))]
+#[path = "client_host.rs"]
 mod client;
 mod cookie_store;
 mod curl_cmd;
 mod debug;
+#[cfg(feature = "curl")]
+mod easy_ext;
+#[cfg(not(feature = "curl"))]
+#[path = "easy_ext_host.rs"]
 mod easy_ext;
 mod error;
 mod header;
@@ -57,6 +66,8 @@ mod ip;
 mod mimetype;
 mod options;
 mod param;
+#[cfg(not(feature = "curl"))]
+mod redirect;
 mod request;
 mod request_cookie;
 mod request_spec;
@@ -69,4 +80,5 @@ mod tests;
 mod timings;
 mod timings_debug;
 mod url;
+#[cfg(feature = "curl")]
 mod version;

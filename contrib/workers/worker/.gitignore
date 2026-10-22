@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+src/hurl_wasm.wasm
+src/worker-configuration.d.ts
+compat/out/

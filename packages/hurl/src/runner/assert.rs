@@ -207,6 +207,7 @@ pub fn eval_explicit_assert(
 
 #[cfg(test)]
 pub mod tests {
+    #[cfg(feature = "libxml")]
     use std::path::Path;
 
     use hurl_core::ast::{
@@ -218,7 +219,9 @@ pub mod tests {
 
     use super::super::query;
     use super::*;
+    #[cfg(feature = "libxml")]
     use crate::http::xml_three_users_http_response;
+    #[cfg(feature = "libxml")]
     use crate::runner::Number;
 
     // `xpath "//user" count == 3`
@@ -266,6 +269,7 @@ pub mod tests {
     fn test_invalid_xpath() {}
 
     #[test]
+    #[cfg(feature = "libxml")]
     fn test_eval() {
         let variables = VariableSet::new();
         let current_dir = Path::new("/home");

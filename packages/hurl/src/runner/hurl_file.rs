@@ -15,10 +15,6 @@
  * limitations under the License.
  *
  */
-use std::thread;
-use std::time::Instant;
-
-use chrono::Utc;
 use hurl_core::ast::{Entry, OptionKind, SourceInfo};
 use hurl_core::error::{DisplaySourceError, OutputFormat};
 use hurl_core::input::Input;
@@ -26,6 +22,8 @@ use hurl_core::parser;
 use hurl_core::types::{Count, Index};
 
 use crate::http::{Call, Client, CredentialForwarding, FollowLocation};
+use crate::runner::body_retention::retain_bodies;
+use crate::util::clock::{self, Stopwatch};
 use crate::util::logger::{ErrorFormat, Logger, LoggerOptions};
 use crate::util::term::{Stderr, Stdout, WriteMode};
 
@@ -171,10 +169,11 @@ pub fn run_entries(
     let mut variables = variables.clone();
     let mut current = Index::new(runner_options.from_entry.unwrap_or(1));
     let mut repeat_count = 0;
+    let mut retained_body_size = 0;
     let last = Index::new(runner_options.to_entry.unwrap_or(entries.len()));
     let default_verbosity = logger.verbosity;
-    let start = Instant::now();
-    let timestamp = Utc::now().timestamp();
+    let start = Stopwatch::start();
+    let timestamp = clock::now().timestamp();
 
     log_run_info(entries, runner_options, &variables, logger);
 
@@ -252,7 +251,7 @@ pub fn run_entries(
         if delay_ms > 0 {
             logger.debug("");
             logger.debug_important(&format!("Delay entry {current} (pause {delay_ms} ms)"));
-            thread::sleep(delay);
+            clock::sleep(delay);
         };
 
         // Loop for executing HTTP run requests, with optional retry. Only "HTTP" errors in options
@@ -274,7 +273,14 @@ pub fn run_entries(
 
         let has_error = results.last().is_some_and(|r| !r.errors.is_empty());
 
-        entries_result.extend(results);
+        for mut result in results {
+            retain_bodies(
+                &mut result,
+                runner_options.max_retained_body_size,
+                &mut retained_body_size,
+            );
+            entries_result.push(result);
+        }
 
         if !runner_options.continue_on_error && has_error {
             break;
@@ -415,7 +421,7 @@ fn run_request(
             listener.on_entry_running(current, last, retry_count);
         }
 
-        thread::sleep(options.retry_interval);
+        clock::sleep(options.retry_interval);
 
         // TODO: We keep this log because we don't want to change stderr with the changes
         // introduced by <https://github.com/Orange-OpenSource/hurl/issues/1973>

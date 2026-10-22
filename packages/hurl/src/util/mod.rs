@@ -16,6 +16,8 @@
  *
  */
 //! Common utilities like log, path helpers and standard output/error wrapper.
+pub mod clock;
+pub mod fs;
 pub mod logger;
 pub mod path;
 pub mod redacted;

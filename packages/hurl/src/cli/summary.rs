@@ -89,6 +89,7 @@ pub mod tests {
     fn create_run_summary() {
         fn new_run(success: bool, entries_count: usize) -> HurlRun {
             let dummy_entry = EntryResult {
+                bodies_dropped: false,
                 entry_index: Index::new(1),
                 source_info: SourceInfo::new(Pos::new(1, 1), Pos::new(1, 1)),
                 calls: vec![],
