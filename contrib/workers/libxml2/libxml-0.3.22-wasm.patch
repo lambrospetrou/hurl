@@ -1,0 +1,125 @@
+diff -ruN -x target libxml-0.3.22/build.rs libxml-0.3.22/build.rs
+--- libxml-0.3.22/build.rs
++++ libxml-0.3.22/build.rs
+@@ -109,6 +109,13 @@
+   // declare availability of config variable (without setting it)
+   println!("cargo::rustc-check-cfg=cfg(libxml_older_than_2_12)");
+ 
++  println!("cargo:rerun-if-env-changed=LIBXML2_BINDINGS");
++  if let (Ok(b), Ok(dir)) = (env::var("LIBXML2_BINDINGS"), env::var("LIBXML2_LIBDIR")) {
++    fs::copy(b, &bindings_path).expect("Failed to copy LIBXML2_BINDINGS");
++    println!("cargo:rustc-link-search=native={dir}");
++    println!("cargo:rustc-link-lib=static=xml2");
++    return;
++  }
+   if let Some(probed_lib) = find_libxml2() {
+     // if we could find header files, generate fresh bindings from them
+     generate_bindings(probed_lib.include_paths, &bindings_path);
+diff -ruN -x target libxml-0.3.22/src/c_helpers.rs libxml-0.3.22/src/c_helpers.rs
+--- libxml-0.3.22/src/c_helpers.rs
++++ libxml-0.3.22/src/c_helpers.rs
+@@ -2,7 +2,9 @@
+ #![allow(non_snake_case)]
+ 
+ use crate::bindings::*;
+-use libc::{c_char, c_int, size_t};
++use std::ffi::{c_char, c_int};
++#[allow(non_camel_case_types)]
++type size_t = usize;
+ use std::os::raw::c_void;
+ use std::ptr;
+ use std::slice;
+@@ -189,6 +191,7 @@
+ 
+ #[cfg(any(
+   target_family = "unix",
++  target_family = "wasm",
+   target_os = "macos",
+   all(target_family = "windows", target_env = "gnu")
+ ))]
+@@ -197,13 +200,17 @@
+     if let Some(xml_free_fn) = xmlFree {
+       xml_free_fn(val);
+     } else {
+-      libc::free(val);
++      free(val);
+     }
+   }
+ }
+ #[cfg(all(target_family = "windows", target_env = "msvc"))]
+ pub fn bindgenFree(val: *mut c_void) {
+   unsafe {
+-    libc::free(val as *mut c_void);
++    free(val as *mut c_void);
+   }
+ }
++
++unsafe extern "C" {
++  fn free(ptr: *mut c_void);
++}
+diff -ruN -x target libxml-0.3.22/src/parser.rs libxml-0.3.22/src/parser.rs
+--- libxml-0.3.22/src/parser.rs
++++ libxml-0.3.22/src/parser.rs
+@@ -242,10 +242,17 @@
+   /// `data` must remain valid for `handler` until the returned guard is dropped.
+   unsafe fn install(handler: xmlStructuredErrorFunc, data: *mut c_void) -> Self {
+     unsafe {
++      #[cfg(not(target_family = "wasm"))]
+       let saved = ThreadErrorHandler {
+         saved_handler: *__xmlStructuredError(),
+         saved_data: *__xmlStructuredErrorContext(),
+       };
++      // libxml2 built without threads exposes the handler as plain globals.
++      #[cfg(target_family = "wasm")]
++      let saved = ThreadErrorHandler {
++        saved_handler: xmlStructuredError,
++        saved_data: xmlStructuredErrorContext,
++      };
+       xmlSetStructuredErrorFunc(data, handler);
+       saved
+     }
+diff -ruN -x target libxml-0.3.22/src/readonly/tree.rs libxml-0.3.22/src/readonly/tree.rs
+--- libxml-0.3.22/src/readonly/tree.rs
++++ libxml-0.3.22/src/readonly/tree.rs
+@@ -1,4 +1,4 @@
+-use libc::{c_char, c_void};
++use std::ffi::{c_char, c_void};
+ use std::collections::{HashMap, HashSet};
+ use std::ffi::{CStr, CString};
+ use std::ptr;
+diff -ruN -x target libxml-0.3.22/src/tree/document.rs libxml-0.3.22/src/tree/document.rs
+--- libxml-0.3.22/src/tree/document.rs
++++ libxml-0.3.22/src/tree/document.rs
+@@ -1,6 +1,6 @@
+ //! Document feature set
+ //!
+-use libc::{c_char, c_int};
++use std::ffi::{c_char, c_int};
+ use std::cell::RefCell;
+ use std::collections::HashMap;
+ use std::ffi::{CStr, CString};
+diff -ruN -x target libxml-0.3.22/src/tree/node.rs libxml-0.3.22/src/tree/node.rs
+--- libxml-0.3.22/src/tree/node.rs
++++ libxml-0.3.22/src/tree/node.rs
+@@ -1,6 +1,6 @@
+ //! Node, and related, feature set
+ //!
+-use libc::{c_char, c_void};
++use std::ffi::{c_char, c_void};
+ use std::cell::RefCell;
+ use std::collections::{HashMap, HashSet};
+ use std::error::Error;
+diff -ruN -x target libxml-0.3.22/src/xpath.rs libxml-0.3.22/src/xpath.rs
+--- libxml-0.3.22/src/xpath.rs
++++ libxml-0.3.22/src/xpath.rs
+@@ -5,7 +5,9 @@
+ use crate::error::StructuredError;
+ use crate::readonly::RoNode;
+ use crate::tree::{Document, DocumentRef, DocumentWeak, Node};
+-use libc::{c_char, c_void, size_t};
++use std::ffi::{c_char, c_void};
++#[allow(non_camel_case_types)]
++type size_t = usize;
+ use std::cell::RefCell;
+ use std::ffi::{CStr, CString};
+ use std::fmt;

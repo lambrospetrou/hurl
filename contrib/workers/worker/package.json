@@ -1,0 +1,27 @@
+{
+  "name": "hurl-worker",
+  "version": "1.0.0",
+  "scripts": {
+    "build:wasm": "../libxml2/build.sh && cd ../hurl_wasm && cargo build --release --config ../libxml2/work/cargo.toml && cp target/wasm32-unknown-unknown/release/hurl_wasm.wasm ../worker/src/hurl_wasm.wasm",
+    "vendor": "npm run build:wasm && rm -rf ../vendor/hurl-wasm && mkdir -p ../vendor/hurl-wasm && cp src/hurl.ts src/wasm.d.ts src/hurl_wasm.wasm ../../../LICENSE ../vendor/hurl-wasm/ && cp ../libxml2/work/libxml2-2.13.8/Copyright ../vendor/hurl-wasm/LICENSE-libxml2 && git rev-parse HEAD > ../vendor/hurl-wasm/COMMIT",
+    "pretest": "npm run build:wasm",
+    "test": "vitest run",
+    "compat": "npm run build:wasm && vitest run -c vitest.compat.config.ts",
+    "dev": "npm run build:wasm && wrangler dev",
+    "typecheck": "npm run cf-typegen && tsc --noEmit -p . && tsc --noEmit -p test && tsc --noEmit -p compat",
+    "cf-typegen": "wrangler types src/worker-configuration.d.ts"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.0",
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.149.0"
+  },
+  "allowScripts": {
+    "workerd": true,
+    "esbuild": true
+  },
+  "private": true
+}

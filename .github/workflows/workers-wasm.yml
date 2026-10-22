@@ -1,0 +1,67 @@
+# Checks the Workers patch (see contrib/workers/README.md) on each push to its branch.
+# The branch is not the default branch of the fork, so `push` is used: GitHub runs
+# `workflow_dispatch` and `schedule` workflows only from the default branch.
+name: workers-wasm
+on:
+  push:
+    branches:
+      - fork/workers-wasm
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  check:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev libxml2-dev pkg-config libclang-dev
+        bin/install_rust.sh
+        cargo install --locked bindgen-cli@0.72.1
+
+    - name: Check default features
+      run: |
+        cargo clippy --all-targets -- -D warnings
+        cargo test --package hurl --package hurl_core --package hurlfmt --lib
+
+    - name: Check no default features
+      run: bin/check/no_default_features.sh
+
+    - name: Test the Worker in local workerd
+      working-directory: contrib/workers/worker
+      run: |
+        npm ci
+        npm run typecheck
+        npm test
+
+    - name: Build vendor/hurl-wasm
+      working-directory: contrib/workers/worker
+      run: npm run vendor
+
+    - name: Name the artifact
+      id: artifact
+      run: echo "name=hurl-wasm-$(TZ=UTC git log -1 --format=%cd --date=format-local:%Y%m%d)-${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+
+    - name: Upload vendor/hurl-wasm
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a #v7.0.1
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: contrib/workers/vendor/hurl-wasm/
+        if-no-files-found: error
